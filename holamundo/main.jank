@@ -1,0 +1,5 @@
+; jank --module-path holamundo compile main -o holamundo.out
+(ns main)
+
+(defn -main [& args]
+  (println "hola mundo!"))

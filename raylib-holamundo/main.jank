@@ -1,0 +1,17 @@
+; runtime
+; jank -L/usr/local/lib -I/usr/local/include  -lraylib --module-path raylib-holamundo run-main main
+; build
+
+(ns main)
+
+(cpp/raw "#include <raylib.h>")
+
+(defn -main [& args]
+  (println "running")
+  (cpp/InitWindow 460 480 "Hola mundo")
+  (cpp/BeginDrawing)
+  (cpp/ClearBackground cpp/DARKGREEN)
+  (cpp/DrawText "Hola Mundo!" 100/2 480/2 40 cpp/WHITE)
+  (cpp/EndDrawing)
+  (sleep 5000)
+  (cpp/CloseWindow))
