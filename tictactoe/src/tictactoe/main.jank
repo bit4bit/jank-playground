@@ -1,0 +1,102 @@
+(ns tictactoe.main
+  (:require [tictactoe.logic]))
+
+(cpp/raw "#include <raylib.h>")
+
+(defn- draw-row [row screen_width cell_height]
+  (let [start_x 0
+        end_x screen_width
+        start_y (* row cell_height)
+        end_y (* row cell_height)]
+    (cpp/DrawLine start_x start_y end_x end_y cpp/WHITE)))
+
+(defn- draw-col [col screen_height cell_width]
+  (let [start_x (* col  cell_width)
+        end_x (* col cell_width)
+        start_y 0
+        end_y screen_height]
+    (cpp/DrawLine start_x start_y end_x end_y cpp/WHITE)))
+
+(defn- draw-grid [game screen_width screen_height]
+  (let [board_size (tictactoe.logic/game->board_size game)
+        cell_width (/ screen_width board_size)
+        cell_height (/ screen_height board_size)]
+    (dotimes [i board_size]
+      (draw-row i screen_width cell_height)
+      (draw-col i screen_height cell_width)
+      )))
+
+(defn- draw-cell [row col cell_width cell_height player]
+  (cpp/DrawText player (* col cell_width) (* row cell_height) 100 cpp/WHITE))
+
+(defn- draw-game [{:keys [game screen_width screen_height cell_width cell_height]}]
+  (cpp/BeginDrawing)
+  (cpp/ClearBackground cpp/DARKGREEN)
+  (draw-grid game screen_width screen_height)
+  (let [board (tictactoe.logic/game->board game)]
+    (doseq [[[row col] player] board]
+      (draw-cell row col cell_width cell_height player))
+    (cpp/EndDrawing)))
+
+(defn turn-player [{:keys [players next_player] :as state}]
+  (assoc state :next_player (int (rem (+ next_player 1) (count players)))))
+
+(defn- update-logic [{:keys [players next_player cell_width cell_height game] :as state}]
+  (if (cpp/IsMouseButtonPressed 0)
+    (let [pressed_col (int (/ (cpp/GetMouseX) cell_width))
+          pressed_row (int (/ (cpp/GetMouseY) cell_height))
+          player (nth players next_player)
+          game (tictactoe.logic/game->mark game player pressed_row pressed_col)
+          ]
+      (-> state
+          turn-player
+          (assoc :game game)))
+    state
+    ))
+
+(defmulti update-by-state
+  (fn [game-state state]
+    (if (vector? game-state) (first game-state) game-state)))
+
+(defmethod update-by-state :new [_ state] state)
+(defmethod update-by-state :playing [_ state] state)
+(defmethod update-by-state :draw [_ state]
+  (println "Draw!!!")
+  (cpp/exit 1))
+(defmethod update-by-state :won [[_ player] _]
+  (println "Won!!!" player)
+  (cpp/exit 1))
+
+(defn- update-state [{:keys [game] :as state}]
+  (let [game-state (tictactoe.logic/game->state game)]
+    (update-by-state game-state state)))
+
+(defn- update-game [state]
+  (-> state
+      update-logic
+      update-state))
+
+(defn- game-loop [{:keys [game screen_width screen_height] :as state}]
+  (loop [state state]
+    (when (not (cpp/WindowShouldClose))
+      (draw-game state)
+      (recur (update-game state)))))
+
+(defn -main [& args]
+  (let [board_size 3
+        game (tictactoe.logic/create-game board_size)
+        screen_width (* board_size 100)
+        screen_height (* board_size 100)
+        state {:game game
+               :players ["x" "o"]
+               :next_player 0
+               :board_size board_size
+               :screen_width screen_width
+               :screen_height screen_height
+               :cell_width (/ screen_width board_size)
+               :cell_height (/ screen_height board_size)}]
+    (cpp/InitWindow screen_width screen_height "Tic Tac Toe")
+    (game-loop state)
+    (sleep 3000)
+    (cpp/CloseWindow)
+    ))
