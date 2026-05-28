@@ -6,6 +6,10 @@
   :middleware [leiningen.jank/middleware]
   :main tictactoe.main
   :profiles {:base {:jank {:output-dir "target/debug"
-                           :optimization-level 0}}
+                           :optimization-level 0
+                           :include-dirs ["/usr/local/include"]
+                           :library-dirs ["/usr/local/lib"]
+                           :linked-libraries ["raylib"]
+                           }}
              :release {:jank {:output-dir "target/release"
                               :optimization-level 2}}})

@@ -7,6 +7,9 @@
 (defn create-game [board_size]
   {:board_size board_size :board {} :state :new})
 
+(defn game->board_size [game]
+  (get game :board_size))
+
 (defn game->board [game]
   (get game :board))
 
@@ -14,7 +17,7 @@
   (get game :state))
 
 (defn- won-on-mark? [game player row col]
-    (let [board_size (get game :board_size)
+    (let [board_size (:board_size game)
         game (assoc game :state :playing)
         game (put->board game row col player)
         board (game->board game)
@@ -45,16 +48,16 @@
 
 (defn- game->marked? [game row col]
   (let [board (game->board game)]
-    (not (nil? (get board [row col])))))
+    (not (nil? (get board [row col] nil)))))
 
 (defn game->mark [game player row col]
+  (when (game->marked? game row col)
+    (throw :invalid_position))
+
   (let [board_size (get game :board_size)
         game (assoc game :state :playing)
         game (put->board game row col player)
         board (game->board game)]
-
-    (when (not (game->marked? game row col))
-      (throw :invalid_position))
 
     (cond
       (won-on-mark? game player row col) (assoc game :state [:won player])
