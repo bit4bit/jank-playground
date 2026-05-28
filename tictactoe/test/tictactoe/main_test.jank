@@ -1,0 +1,74 @@
+(ns tictactoe.main-test
+  (:require [clojure.test :refer [deftest testing is]]
+            [tictactoe.logic]))
+
+
+(deftest game
+  (testing "new game"
+    (is (= {:board_size 3 :board {} :state :new} (tictactoe.logic/create-game 3))))
+  (testing "representation of board"
+    (let [game (tictactoe.logic/create-game 3)]
+      (is (= {} (tictactoe.logic/game->board game)))))
+  (testing "place into board"
+    (let [game (tictactoe.logic/create-game 3)
+          next-game (tictactoe.logic/put->board game 1 1 "x")]
+      (is (= { [1 1] "x" } (tictactoe.logic/game->board next-game))))))
+
+(deftest game-states
+  (testing "new"
+    (let [game (tictactoe.logic/create-game 3)]
+      (is (= :new (tictactoe.logic/game->state game)))))
+  (testing "playing"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 1 1)]
+      (is (= :playing (tictactoe.logic/game->state game)))))
+  (testing "winning horizontal"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 0 0)
+          game (tictactoe.logic/game->mark game "x" 0 1)
+          game (tictactoe.logic/game->mark game "x" 0 2)]
+      (is (= [:won "x"] (tictactoe.logic/game->state game)))))  
+  (testing "winning vertical"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 0 0)
+          game (tictactoe.logic/game->mark game "x" 1 0)
+          game (tictactoe.logic/game->mark game "x" 2 0)]
+      (is (= [:won "x"] (tictactoe.logic/game->state game)))))
+  (testing "winning down diagonal"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 0 0)
+          game (tictactoe.logic/game->mark game "x" 1 1)
+          game (tictactoe.logic/game->mark game "x" 2 2)]
+      (is (= [:won "x"] (tictactoe.logic/game->state game)))))
+  (testing "winning up diagonal"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 2 0)
+          game (tictactoe.logic/game->mark game "x" 1 1)
+          game (tictactoe.logic/game->mark game "x" 0 2)]
+      (is (= [:won "x"] (tictactoe.logic/game->state game)))))
+  (testing "draw"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 0 0)
+          game (tictactoe.logic/game->mark game "o" 0 1)
+          game (tictactoe.logic/game->mark game "x" 0 2)
+          game (tictactoe.logic/game->mark game "o" 1 0)
+          game (tictactoe.logic/game->mark game "o" 1 1)
+          game (tictactoe.logic/game->mark game "x" 1 2)
+          game (tictactoe.logic/game->mark game "o" 2 0)
+          game (tictactoe.logic/game->mark game "x" 2 1)
+          game (tictactoe.logic/game->mark game "o" 2 2)]
+      (is (= :draw (tictactoe.logic/game->state game))))))
+
+(deftest game-not-winning
+    (testing "not winning horizontal"
+      (let [game (tictactoe.logic/create-game 3)
+            game (tictactoe.logic/game->mark game "x" 0 0)
+            game (tictactoe.logic/game->mark game "o" 0 1)
+            game (tictactoe.logic/game->mark game "x" 0 2)]
+        (is (= :playing (tictactoe.logic/game->state game)))))
+  (testing "not winning vertical"
+    (let [game (tictactoe.logic/create-game 3)
+          game (tictactoe.logic/game->mark game "x" 0 0)
+          game (tictactoe.logic/game->mark game "o" 1 0)
+          game (tictactoe.logic/game->mark game "x" 2 0)]
+      (is (= :playing (tictactoe.logic/game->state game))))))
