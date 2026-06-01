@@ -1,0 +1,7 @@
+(ns ftxui.main-test
+  (:require [clojure.test :refer [deftest testing is]]
+            [ftxui.main]))
+
+(deftest a-test
+  (testing "FIXME, I fail."
+    (is (= 0 1))))

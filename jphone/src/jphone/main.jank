@@ -1,0 +1,35 @@
+(ns jphone.main
+  (:include "pjsua2.hpp"))
+
+;; not working, what to do?
+(defprotocol AccountEvents
+  (onRegState [param]))
+
+(extend pj.Account
+  AccountEvents
+  {:onRegState #(println "register")})
+
+(defn -main [& args]
+  (let [ep (cpp/pj.Endpoint)
+        ep_cfg (cpp/pj.EpConfig)
+        tcfg (cpp/pj.TransportConfig)
+        acfg (cpp/pj.AccountConfig)
+        cred (cpp/pj.AuthCredInfo "digest" "*" "test" 0 "secret")
+        acc (AccountEvents)]
+
+    (.libCreate ep)
+    (.libInit ep ep_cfg)
+    (cpp/= (.-port tcfg) 5060)
+    (.transportCreate ep cpp/PJSIP_TRANSPORT_UDP tcfg)
+    (.libStart ep)
+    (println "pjsua2 started")
+
+    (cpp/= (.-idUri acfg) (cpp/cast pj.string "sip:test@sip.pjsip.org"))
+    (cpp/= (.-registrarUri (.-regConfig acfg)) (cpp/cast pj.string "sip:sip.pjsip.org"))
+    (.push_back (.-authCreds (.-sipConfig acfg)) cred)
+
+    (.create acc acfg)
+
+    (pj.pj_thread_sleep 10000)
+
+    (println "Hello, world!")))
